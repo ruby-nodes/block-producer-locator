@@ -9,7 +9,7 @@ persistence, output rendering, and the CLI entry point.
       dev dependencies (pytest, ruff)
 - [x] **1.2** Data models: `NodeLocation`, `ProbeResult`, `CrawlRun`
       dataclasses
-- [ ] **1.3** Configuration: YAML/TOML config file loading (DB path, MaxMind
+- [x] **1.3** Configuration: YAML/TOML config file loading (DB path, MaxMind
       DB paths, node endpoints, devp2p binary path)
 - [ ] **1.4** CLI skeleton: `click` or `argparse` entry point with
       `--network`, `--format`, `--config` flags
