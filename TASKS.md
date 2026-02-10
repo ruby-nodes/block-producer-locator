@@ -5,7 +5,7 @@
 Everything shared across probes: models, configuration, geo-IP pipeline,
 persistence, output rendering, and the CLI entry point.
 
-- [ ] **1.1** Project scaffolding: `pyproject.toml`, package layout (`bpl/`),
+- [x] **1.1** Project scaffolding: `pyproject.toml`, package layout (`bpl/`),
       dev dependencies (pytest, ruff)
 - [ ] **1.2** Data models: `NodeLocation`, `ProbeResult`, `CrawlRun`
       dataclasses
