@@ -11,7 +11,7 @@ persistence, output rendering, and the CLI entry point.
       dataclasses
 - [x] **1.3** Configuration: YAML/TOML config file loading (DB path, MaxMind
       DB paths, node endpoints, devp2p binary path)
-- [ ] **1.4** CLI skeleton: `click` or `argparse` entry point with
+- [x] **1.4** CLI skeleton: `click` or `argparse` entry point with
       `--network`, `--format`, `--config` flags
 - [ ] **1.5** Probe registry: abstract `Probe` base class + dynamic dispatch
       by network name

@@ -45,3 +45,32 @@ optional — the tool works with pure defaults when no config file exists.
 - If we later need to *write* config files programmatically, `pyyaml` supports
   dumping; `tomllib` does not (we would need `tomli-w`).
 
+
+## ADR-002: No per-endpoint CLI flags; use config file only
+
+**Date:** 2026-02-10
+**Status:** accepted
+
+### Context
+
+The architecture diagram shows `--bsc-node URL` and `--tron-node URL` as CLI
+flags. However, `BplConfig` already stores `bsc_node_url` and `tron_node_url`
+and is loaded from the YAML config file (`~/.bpl/config.yaml`). Duplicating
+these as CLI flags would mean two code paths for the same values, and the
+number of endpoint flags will grow as probes are added.
+
+### Decision
+
+Keep endpoint configuration exclusively in the YAML config file. The CLI
+exposes only `--network`, `--format`, and `--config`. The `--config` flag
+already lets the user point to an alternate config file when needed.
+
+### Consequences
+
+- Simpler CLI surface — three flags instead of a growing list.
+- Users who want to override a single endpoint must edit the config file (or
+  pass an alternate file via `--config`). This is acceptable for a tool that
+  is typically configured once per machine.
+- If ad-hoc endpoint overrides become a frequent need, we can add flags later
+  without breaking the existing interface.
+
