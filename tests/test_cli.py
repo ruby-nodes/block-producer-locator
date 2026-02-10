@@ -1,5 +1,7 @@
 """Tests for the CLI entry point."""
 
+from unittest.mock import patch
+
 from click.testing import CliRunner
 
 from bpl.cli import main
@@ -33,11 +35,12 @@ class TestCliHelp:
 class TestNetworkOption:
     """--network flag validation."""
 
-    def test_valid_network_accepted(self) -> None:
+    @patch("bpl.probes.base_l2.resolve_all", return_value=[("1.2.3.4", 0)])
+    def test_valid_network_accepted(self, _mock) -> None:
         runner = CliRunner()
         result = runner.invoke(main, ["--network", "base"])
         assert result.exit_code == 0
-        assert "network=base" in result.output
+        assert "1.2.3.4" in result.output
 
     def test_all_network_accepted(self) -> None:
         runner = CliRunner()
@@ -72,17 +75,22 @@ class TestNetworkOption:
 class TestFormatOption:
     """--format flag validation."""
 
-    def test_default_is_table(self) -> None:
+    @patch("bpl.probes.base_l2.resolve_all", return_value=[("1.2.3.4", 0)])
+    def test_default_is_table(self, _mock) -> None:
         runner = CliRunner()
         result = runner.invoke(main, ["--network", "base"])
         assert result.exit_code == 0
-        assert "format=table" in result.output
+        # Table output contains the IP and rich table borders
+        assert "1.2.3.4" in result.output
+        assert "IP" in result.output
 
-    def test_json_format(self) -> None:
+    @patch("bpl.probes.base_l2.resolve_all", return_value=[("1.2.3.4", 0)])
+    def test_json_format(self, _mock) -> None:
         runner = CliRunner()
         result = runner.invoke(main, ["--network", "base", "--format", "json"])
         assert result.exit_code == 0
-        assert "format=json" in result.output
+        assert '"network": "base"' in result.output
+        assert '"1.2.3.4"' in result.output
 
     def test_invalid_format_rejected(self) -> None:
         runner = CliRunner()
@@ -90,11 +98,12 @@ class TestFormatOption:
         assert result.exit_code != 0
         assert "Invalid value" in result.output
 
-    def test_short_flag(self) -> None:
+    @patch("bpl.probes.base_l2.resolve_all", return_value=[("1.2.3.4", 0)])
+    def test_short_flag(self, _mock) -> None:
         runner = CliRunner()
         result = runner.invoke(main, ["-n", "base", "-f", "json"])
         assert result.exit_code == 0
-        assert "format=json" in result.output
+        assert '"network": "base"' in result.output
 
 
 class TestConfigOption:

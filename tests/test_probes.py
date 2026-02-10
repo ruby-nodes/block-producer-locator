@@ -1,5 +1,7 @@
 """Tests for the probe registry and abstract Probe base class."""
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 from click.testing import CliRunner
 
@@ -91,7 +93,7 @@ class TestStubProbes:
 
     @pytest.mark.parametrize(
         "network",
-        ["base", "optimism", "starknet", "bsc", "tron", "ethereum"],
+        ["optimism", "starknet", "bsc", "tron", "ethereum"],
     )
     def test_stub_raises_not_implemented(self, network: str) -> None:
         probe = get_probe(network)
@@ -100,20 +102,71 @@ class TestStubProbes:
             probe.run(cfg)
 
 
+class TestBaseL2Probe:
+    """BaseL2Probe resolves DNS and returns a ProbeResult."""
+
+    @patch("bpl.probes.base_l2.resolve_all")
+    def test_returns_single_mode(self, mock_resolve: MagicMock) -> None:
+        mock_resolve.return_value = [("1.2.3.4", 0)]
+        probe = BaseL2Probe()
+        result = probe.run(BplConfig())
+        assert result.mode == "single"
+        assert result.network == "base"
+
+    @patch("bpl.probes.base_l2.resolve_all")
+    def test_node_fields(self, mock_resolve: MagicMock) -> None:
+        mock_resolve.return_value = [("10.0.0.1", 443)]
+        result = BaseL2Probe().run(BplConfig())
+        assert len(result.nodes) == 1
+        node = result.nodes[0]
+        assert node.ip == "10.0.0.1"
+        assert node.port == 443
+        assert node.network == "base"
+        assert node.role == "sequencer"
+
+    @patch("bpl.probes.base_l2.resolve_all")
+    def test_multiple_addresses(self, mock_resolve: MagicMock) -> None:
+        mock_resolve.return_value = [
+            ("1.2.3.4", 0),
+            ("5.6.7.8", 0),
+            ("2001:db8::1", 0),
+        ]
+        result = BaseL2Probe().run(BplConfig())
+        assert len(result.nodes) == 3
+        ips = [n.ip for n in result.nodes]
+        assert ips == ["1.2.3.4", "5.6.7.8", "2001:db8::1"]
+
+    @patch("bpl.probes.base_l2.resolve_all")
+    def test_calls_resolve_with_correct_host(self, mock_resolve: MagicMock) -> None:
+        mock_resolve.return_value = []
+        BaseL2Probe().run(BplConfig())
+        mock_resolve.assert_called_once_with("mainnet-sequencer.base.org")
+
+    @patch("bpl.probes.base_l2.resolve_all")
+    def test_empty_dns_result(self, mock_resolve: MagicMock) -> None:
+        mock_resolve.return_value = []
+        result = BaseL2Probe().run(BplConfig())
+        assert result.nodes == []
+        assert result.mode == "single"
+
+
 class TestCLIProbeDispatch:
     """CLI dispatches to probes and handles NotImplementedError gracefully."""
 
-    def test_single_network_dispatch(self) -> None:
+    @patch("bpl.probes.base_l2.resolve_all", return_value=[("1.2.3.4", 0)])
+    def test_single_network_dispatch(self, _mock_resolve: MagicMock) -> None:
         runner = CliRunner()
         result = runner.invoke(main, ["--network", "base"])
         assert result.exit_code == 0
-        assert "network=base" in result.output
-        assert "not yet implemented" in result.output
+        # Base probe is now implemented — output should contain the IP
+        assert "1.2.3.4" in result.output
 
-    def test_all_networks_dispatch(self) -> None:
+    @patch("bpl.probes.base_l2.resolve_all", return_value=[("1.2.3.4", 0)])
+    def test_all_networks_dispatch(self, _mock_resolve: MagicMock) -> None:
         runner = CliRunner()
         result = runner.invoke(main, ["--network", "all"])
         assert result.exit_code == 0
-        # Each registered network should appear in output
-        for net in registered_networks():
+        # Base should show the resolved IP; stubs should say not yet implemented
+        assert "1.2.3.4" in result.output
+        for net in ("optimism", "starknet", "bsc", "tron", "ethereum"):
             assert f"network={net}" in result.output
