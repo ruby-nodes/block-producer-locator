@@ -15,7 +15,7 @@ persistence, output rendering, and the CLI entry point.
       `--network`, `--format`, `--config` flags
 - [x] **1.5** Probe registry: abstract `Probe` base class + dynamic dispatch
       by network name
-- [ ] **1.6** Geo-IP module: MaxMind reader (City + ASN), cloud-provider
+- [x] **1.6** Geo-IP module: MaxMind reader (City + ASN), cloud-provider
       detection via static ASN map (~20 known cloud ASNs), coordinate-based
       region inference
 - [ ] **1.7** SQLite persistence: `crawl_runs` and `nodes` tables, upsert
