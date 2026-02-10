@@ -1,0 +1,95 @@
+# Tasks
+
+## Milestone 1 — Core Infrastructure
+
+Everything shared across probes: models, configuration, geo-IP pipeline,
+persistence, output rendering, and the CLI entry point.
+
+- [ ] Project scaffolding: `pyproject.toml`, package layout (`bpl/`), dev
+      dependencies (pytest, ruff)
+- [ ] Data models: `NodeLocation`, `ProbeResult`, `CrawlRun` dataclasses
+- [ ] Configuration: YAML/TOML config file loading (DB path, MaxMind DB
+      paths, node endpoints, devp2p binary path)
+- [ ] CLI skeleton: `click` or `argparse` entry point with `--network`,
+      `--format`, `--config` flags
+- [ ] Probe registry: abstract `Probe` base class + dynamic dispatch by
+      network name
+- [ ] Geo-IP module: MaxMind reader (City + ASN), cloud-provider detection
+      via static ASN map (~20 known cloud ASNs), coordinate-based region
+      inference
+- [ ] SQLite persistence: `crawl_runs` and `nodes` tables, upsert logic,
+      migration helper
+- [ ] Output renderer: `rich` table formatter + JSON formatter, output-mode
+      dispatch (single / list / aggregate)
+- [ ] Aggregator: country distribution, ASN breakdown, cloud-vs-bare-metal
+      ratio calculations
+
+## Milestone 2 — L2 Sequencer Probes
+
+Simple DNS-based probes, good first end-to-end validation of the full
+pipeline.
+
+- [ ] DNS resolution helper: `socket.getaddrinfo` wrapper returning all A/AAAA
+      records
+- [ ] Base probe: resolve `mainnet-sequencer.base.org`, produce
+      `ProbeResult(mode="single")`
+- [ ] Optimism probe: resolve `mainnet-sequencer.optimism.io`
+- [ ] Starknet probe: resolve `alpha-mainnet.starknet.io`
+- [ ] End-to-end test: run one L2 probe, verify geo-IP enrichment, SQLite
+      write, table + JSON output
+
+## Milestone 3 — BSC Probe
+
+Combines DHT crawling, admin API, and on-chain data to identify the ~21
+active validators.
+
+- [ ] `devp2p` wrapper: subprocess launcher for `devp2p discv4 crawl`, JSON
+      output parser, configurable bootnodes + timeout
+- [ ] `admin_peers` fetcher: JSON-RPC call via `web3.py` provider, parse
+      enode ID + remote IP
+- [ ] On-chain validator set: query `getValidators` or StakeHub contract for
+      current active validators
+- [ ] Validator correlation: match enode public keys from DHT / peers to
+      on-chain validator keys
+- [ ] BSC probe integration: orchestrate the above, produce
+      `ProbeResult(mode="list")`
+- [ ] Test with live BSC geth node
+
+## Milestone 4 — TRON Probe
+
+HTTP API-based probe against a running java-tron full node.
+
+- [ ] TRON API client: `requests`-based wrapper for java-tron HTTP API
+      (configurable host + port)
+- [ ] `wallet/listnodes` fetcher: parse peer list into `(ip, port)` tuples
+- [ ] `wallet/listwitnesses` fetcher: parse Super Representative list
+      (address, vote count, url)
+- [ ] SR-to-node correlation: match SR addresses to peer IPs
+- [ ] TRON probe integration: orchestrate the above, produce
+      `ProbeResult(mode="list")`
+- [ ] Test with live java-tron node
+
+## Milestone 5 — Ethereum Probe
+
+DHT crawl producing aggregate-only statistics (no individual validator
+identification).
+
+- [ ] Reuse `devp2p` wrapper from M3 with Ethereum mainnet bootnodes
+- [ ] Ethereum probe: run crawl, geo-locate all discovered IPs, produce
+      `ProbeResult(mode="aggregate")`
+- [ ] Aggregation output: country table, top-N ASNs, cloud-vs-bare-metal
+      pie-chart (text representation)
+- [ ] Handle large crawl results efficiently (streaming geo-IP lookups,
+      batched SQLite inserts)
+
+## Milestone 6 — Polish & Documentation
+
+Harden the tool, add tests, write user-facing documentation.
+
+- [ ] Error handling: network timeouts, missing MaxMind DBs, unreachable
+      nodes, missing devp2p binary
+- [ ] Logging: structured logging with `--verbose` / `--quiet` flags
+- [ ] Unit tests: geo-IP module, aggregator, output renderer, config loading
+- [ ] Integration tests: mock-based probe tests
+- [ ] README: installation, configuration, usage examples, sample output
+- [ ] CI: GitHub Actions workflow for lint + test
