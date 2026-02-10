@@ -30,7 +30,7 @@ persistence, output rendering, and the CLI entry point.
 Simple DNS-based probes, good first end-to-end validation of the full
 pipeline.
 
-- [ ] **2.1** DNS resolution helper: `socket.getaddrinfo` wrapper returning
+- [x] **2.1** DNS resolution helper: `socket.getaddrinfo` wrapper returning
       all A/AAAA records
 - [ ] **2.2** Base probe: resolve `mainnet-sequencer.base.org`, produce
       `ProbeResult(mode="single")`
