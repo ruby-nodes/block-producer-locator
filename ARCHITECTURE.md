@@ -8,9 +8,9 @@ Block Producer Locator is a Python CLI tool that discovers block-producing nodes
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         CLI (main.py)                           │
+│                         CLI (cli.py)                            │
 │  --network {base,optimism,starknet,bsc,tron,ethereum,all}       │
-│  --output {table,json}  --bsc-node URL  --tron-node URL         │
+│  --format {table,json}  --config PATH                           │
 └──────────┬──────────────────────────────────────────────────────┘
            │
            ▼
@@ -83,7 +83,7 @@ Each probe implements the `Probe` abstract base class:
 ```python
 class Probe(ABC):
     @abstractmethod
-    def run(self, config: dict) -> ProbeResult:
+    def run(self, config: BplConfig) -> ProbeResult:
         ...
 ```
 

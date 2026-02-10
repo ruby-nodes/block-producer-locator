@@ -2,11 +2,16 @@
 
 import logging
 import sys
+import time
 
 import click
 
-from bpl.config import ConfigError, load_config
+from bpl.aggregator import aggregate_to_meta
+from bpl.config import BplConfig, ConfigError, load_config
+from bpl.geoip import enrich
+from bpl.models import CrawlRun
 from bpl.output import render
+from bpl.persistence import init_db, save_crawl_run, save_nodes
 from bpl.probes import get_probe, registered_networks
 
 logger = logging.getLogger(__name__)
@@ -61,8 +66,10 @@ def main(network: str, output_format: str, config_path: str | None) -> None:
         _run_probe(net, output_format, cfg)
 
 
-def _run_probe(network: str, output_format: str, cfg: object) -> None:
-    """Dispatch to a single probe and handle results.
+def _run_probe(network: str, output_format: str, cfg: BplConfig) -> None:
+    """Dispatch to a single probe and run the full pipeline.
+
+    Pipeline: probe → geo-enrich → persist → aggregate → render.
 
     Args:
         network: Network name to probe.
@@ -76,7 +83,9 @@ def _run_probe(network: str, output_format: str, cfg: object) -> None:
         return
 
     try:
-        result = probe.run(cfg)  # type: ignore[arg-type]
+        t0 = time.monotonic()
+        result = probe.run(cfg)
+        duration = time.monotonic() - t0
     except NotImplementedError:
         click.echo(
             f"bpl: network={network}, format={output_format} "
@@ -84,5 +93,24 @@ def _run_probe(network: str, output_format: str, cfg: object) -> None:
         )
         return
 
-    # TODO(1.6–1.7): geo-enrich, persist.
+    # Geo-IP enrichment.
+    enrich(result.nodes, cfg)
+
+    # Persistence.
+    conn = init_db(cfg.db_path)
+    try:
+        crawl_run = CrawlRun(
+            network=network,
+            node_count=len(result.nodes),
+            duration_seconds=duration,
+        )
+        run_id = save_crawl_run(conn, crawl_run)
+        save_nodes(conn, result.nodes, run_id)
+    finally:
+        conn.close()
+
+    # Aggregation (populate meta for aggregate / list modes).
+    if result.mode in ("aggregate", "list"):
+        result.meta.update(aggregate_to_meta(result.nodes))
+
     render(result, output_format)

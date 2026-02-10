@@ -10,7 +10,7 @@ from bpl.models import CrawlRun, NodeLocation
 
 logger = logging.getLogger(__name__)
 
-_SCHEMA_VERSION = 1
+_SCHEMA_VERSION = 2
 
 _SCHEMA_V1 = """\
 CREATE TABLE IF NOT EXISTS crawl_runs (
@@ -47,9 +47,45 @@ CREATE TABLE IF NOT EXISTS nodes (
 );
 """
 
+_SCHEMA_V2 = """\
+-- Add foreign key constraint on nodes.crawl_run_id.
+-- SQLite does not support ALTER TABLE … ADD CONSTRAINT, so we
+-- recreate the table with the FK declared.
+CREATE TABLE nodes_new (
+    network        TEXT NOT NULL,
+    ip             TEXT NOT NULL,
+    port           INTEGER NOT NULL,
+    node_id        TEXT,
+    role           TEXT,
+    label          TEXT,
+    city           TEXT,
+    country        TEXT,
+    country_code   TEXT,
+    latitude       REAL,
+    longitude      REAL,
+    asn            INTEGER,
+    asn_org        TEXT,
+    cloud_provider TEXT,
+    cloud_region   TEXT,
+    is_cloud       INTEGER,
+    raw_data       TEXT NOT NULL DEFAULT '{}',
+    first_seen     TEXT NOT NULL,
+    last_seen      TEXT NOT NULL,
+    crawl_run_id   TEXT REFERENCES crawl_runs(id),
+    UNIQUE (network, ip, port)
+);
+
+INSERT INTO nodes_new SELECT * FROM nodes;
+DROP TABLE nodes;
+ALTER TABLE nodes_new RENAME TO nodes;
+"""
+
 
 def init_db(db_path: str) -> sqlite3.Connection:
     """Open (or create) the SQLite database and apply pending migrations.
+
+    Creates the parent directory if it does not exist (unless the path
+    is the special ``":memory:"`` value).
 
     Args:
         db_path: Filesystem path for the database, or ``":memory:"`` for
@@ -59,6 +95,11 @@ def init_db(db_path: str) -> sqlite3.Connection:
         An open ``sqlite3.Connection`` with WAL journal mode and foreign
         keys enabled.
     """
+    if db_path != ":memory:":
+        import os
+
+        os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
+
     conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA journal_mode = WAL")
     conn.execute("PRAGMA foreign_keys = ON")
@@ -185,6 +226,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if current < 1:
         logger.debug("Applying schema migration v0 → v1")
         conn.executescript(_SCHEMA_V1)
+
+    if current < 2:
+        logger.debug("Applying schema migration v1 → v2")
+        conn.executescript(_SCHEMA_V2)
 
     conn.execute(f"PRAGMA user_version = {_SCHEMA_VERSION}")
     conn.commit()

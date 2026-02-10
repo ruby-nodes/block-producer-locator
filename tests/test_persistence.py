@@ -51,7 +51,7 @@ class TestInitDb:
     def test_sets_schema_version(self) -> None:
         conn = init_db(":memory:")
         (version,) = conn.execute("PRAGMA user_version").fetchone()
-        assert version == 1
+        assert version == 2
         conn.close()
 
     def test_idempotent(self) -> None:
@@ -62,7 +62,31 @@ class TestInitDb:
 
         _migrate(conn)
         (version,) = conn.execute("PRAGMA user_version").fetchone()
-        assert version == 1
+        assert version == 2
+        conn.close()
+
+    def test_nodes_crawl_run_id_has_fk(self) -> None:
+        """nodes.crawl_run_id references crawl_runs(id)."""
+        conn = init_db(":memory:")
+        # Attempt to insert a node with a nonexistent crawl_run_id.
+        import sqlite3
+
+        import pytest
+
+        with pytest.raises(sqlite3.IntegrityError):
+            conn.execute(
+                "INSERT INTO nodes (network, ip, port, raw_data, "
+                "first_seen, last_seen, crawl_run_id) "
+                "VALUES ('test', '1.2.3.4', 30303, '{}', "
+                "'2026-01-01', '2026-01-01', 'nonexistent')"
+            )
+        conn.close()
+
+    def test_creates_parent_directory(self, tmp_path) -> None:
+        """init_db creates missing parent directories."""
+        db_file = tmp_path / "subdir" / "deep" / "bpl.db"
+        conn = init_db(str(db_file))
+        assert db_file.exists()
         conn.close()
 
 
