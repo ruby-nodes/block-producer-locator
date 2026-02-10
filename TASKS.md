@@ -13,7 +13,7 @@ persistence, output rendering, and the CLI entry point.
       DB paths, node endpoints, devp2p binary path)
 - [x] **1.4** CLI skeleton: `click` or `argparse` entry point with
       `--network`, `--format`, `--config` flags
-- [ ] **1.5** Probe registry: abstract `Probe` base class + dynamic dispatch
+- [x] **1.5** Probe registry: abstract `Probe` base class + dynamic dispatch
       by network name
 - [ ] **1.6** Geo-IP module: MaxMind reader (City + ASN), cloud-provider
       detection via static ASN map (~20 known cloud ASNs), coordinate-based

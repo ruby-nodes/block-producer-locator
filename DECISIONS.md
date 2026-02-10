@@ -74,3 +74,31 @@ already lets the user point to an alternate config file when needed.
 - If ad-hoc endpoint overrides become a frequent need, we can add flags later
   without breaking the existing interface.
 
+
+## ADR-003: Probe.run() accepts typed BplConfig, not a raw dict
+
+**Date:** 2026-02-10
+**Status:** accepted
+
+### Context
+
+The architecture document shows the probe signature as `run(self, config: dict)`.
+However, the project already has a typed `BplConfig` dataclass (task 1.3) that
+carries all configuration the probes need (DB path, MaxMind paths, node URLs,
+devp2p binary path). Using a raw dict would sacrifice type safety and IDE
+support.
+
+### Decision
+
+`Probe.run()` takes `config: BplConfig` instead of `config: dict`. Every
+concrete probe receives the full typed configuration object.
+
+### Consequences
+
+- Probes get autocomplete and type-checking for config fields.
+- Adding a new config field automatically makes it visible to all probes
+  without changing signatures.
+- If a probe ever needs config that doesn't belong in `BplConfig`, we
+  can extend the dataclass or pass additional data via `BplConfig.meta`
+  (not yet needed).
+

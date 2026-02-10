@@ -43,7 +43,6 @@ class TestNetworkOption:
         runner = CliRunner()
         result = runner.invoke(main, ["--network", "all"])
         assert result.exit_code == 0
-        assert "network=all" in result.output
 
     def test_invalid_network_rejected(self) -> None:
         runner = CliRunner()

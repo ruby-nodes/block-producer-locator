@@ -6,6 +6,7 @@ import sys
 import click
 
 from bpl.config import ConfigError, load_config
+from bpl.probes import get_probe, registered_networks
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +54,36 @@ def main(network: str, output_format: str, config_path: str | None) -> None:
 
     logger.debug("Config loaded: %s", cfg)
 
-    # TODO(1.5): dispatch to probe registry based on *network*.
+    networks = registered_networks() if network == "all" else [network]
+
+    for net in networks:
+        _run_probe(net, output_format, cfg)
+
+
+def _run_probe(network: str, output_format: str, cfg: object) -> None:
+    """Dispatch to a single probe and handle results.
+
+    Args:
+        network: Network name to probe.
+        output_format: Output format (``"table"`` or ``"json"``).
+        cfg: Loaded ``BplConfig`` instance.
+    """
+    try:
+        probe = get_probe(network)
+    except ValueError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        return
+
+    try:
+        result = probe.run(cfg)  # type: ignore[arg-type]
+    except NotImplementedError:
+        click.echo(
+            f"bpl: network={network}, format={output_format} "
+            f"(probe not yet implemented)"
+        )
+        return
+
+    # TODO(1.6–1.9): geo-enrich, persist, aggregate, render.
     click.echo(
-        f"bpl: network={network}, format={output_format} "
-        f"(probe dispatch not yet implemented — see task 1.5)"
+        f"bpl: network={network}, format={output_format}, nodes={len(result.nodes)}"
     )
