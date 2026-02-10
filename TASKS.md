@@ -20,7 +20,7 @@ persistence, output rendering, and the CLI entry point.
       region inference
 - [x] **1.7** SQLite persistence: `crawl_runs` and `nodes` tables, upsert
       logic, migration helper
-- [ ] **1.8** Output renderer: `rich` table formatter + JSON formatter,
+- [x] **1.8** Output renderer: `rich` table formatter + JSON formatter,
       output-mode dispatch (single / list / aggregate)
 - [ ] **1.9** Aggregator: country distribution, ASN breakdown,
       cloud-vs-bare-metal ratio calculations

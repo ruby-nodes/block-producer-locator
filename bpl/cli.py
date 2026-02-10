@@ -6,6 +6,7 @@ import sys
 import click
 
 from bpl.config import ConfigError, load_config
+from bpl.output import render
 from bpl.probes import get_probe, registered_networks
 
 logger = logging.getLogger(__name__)
@@ -83,7 +84,5 @@ def _run_probe(network: str, output_format: str, cfg: object) -> None:
         )
         return
 
-    # TODO(1.6–1.9): geo-enrich, persist, aggregate, render.
-    click.echo(
-        f"bpl: network={network}, format={output_format}, nodes={len(result.nodes)}"
-    )
+    # TODO(1.6–1.7): geo-enrich, persist.
+    render(result, output_format)
