@@ -18,7 +18,7 @@ persistence, output rendering, and the CLI entry point.
 - [x] **1.6** Geo-IP module: MaxMind reader (City + ASN), cloud-provider
       detection via static ASN map (~20 known cloud ASNs), coordinate-based
       region inference
-- [ ] **1.7** SQLite persistence: `crawl_runs` and `nodes` tables, upsert
+- [x] **1.7** SQLite persistence: `crawl_runs` and `nodes` tables, upsert
       logic, migration helper
 - [ ] **1.8** Output renderer: `rich` table formatter + JSON formatter,
       output-mode dispatch (single / list / aggregate)

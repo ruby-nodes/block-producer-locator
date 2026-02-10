@@ -102,3 +102,33 @@ concrete probe receives the full typed configuration object.
   can extend the dataclass or pass additional data via `BplConfig.meta`
   (not yet needed).
 
+
+## ADR-004: Use SQLite user_version pragma for schema migrations
+
+**Date:** 2026-02-10
+**Status:** accepted
+
+### Context
+
+Task 1.7 requires a migration helper for the SQLite schema. Options range
+from lightweight (single `CREATE TABLE IF NOT EXISTS`) to heavy (Alembic,
+migration-file directories). The project uses raw `sqlite3` with no ORM,
+and the schema is small (two tables).
+
+### Decision
+
+Track schema version via the SQLite `PRAGMA user_version` integer. The
+`_migrate()` function reads the current version and applies each migration
+step in order (e.g. version 0→1 creates the initial tables). Future schema
+changes increment the version and add conditional blocks.
+
+### Consequences
+
+- Zero external dependencies for migrations.
+- Adding a new migration is a simple `if current < N:` block + bump the
+  version constant.
+- No rollback support — acceptable for a CLI tool where the DB can be
+  deleted and re-crawled.
+- If migrations ever need to become complex (data transformations, etc.),
+  we can revisit.
+
