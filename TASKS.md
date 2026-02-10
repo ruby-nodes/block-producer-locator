@@ -7,7 +7,7 @@ persistence, output rendering, and the CLI entry point.
 
 - [x] **1.1** Project scaffolding: `pyproject.toml`, package layout (`bpl/`),
       dev dependencies (pytest, ruff)
-- [ ] **1.2** Data models: `NodeLocation`, `ProbeResult`, `CrawlRun`
+- [x] **1.2** Data models: `NodeLocation`, `ProbeResult`, `CrawlRun`
       dataclasses
 - [ ] **1.3** Configuration: YAML/TOML config file loading (DB path, MaxMind
       DB paths, node endpoints, devp2p binary path)
